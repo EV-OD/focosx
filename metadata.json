@@ -1,0 +1,7 @@
+{
+  "name": "FocosX",
+  "description": "A minimal, extensible spatial workspace for deep study and annotation, featuring an infinite canvas and plugin-based frame architecture.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
