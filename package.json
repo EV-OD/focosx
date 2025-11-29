@@ -3,16 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://USERNAME.github.io/REPO_NAME",
+  "homepage": "https://EV-OD.github.io/focosx",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/USERNAME/REPO_NAME.git"
+    "url": "git+https://github.com/EV-OD/focosx.git"
   },
   "scripts": {
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "build:ghpages": "vite build --base /REPO_NAME/",
+    "build:ghpages": "vite build --base /focosx/",
     "preview": "vite preview",
     "predeploy": "pnpm run build:ghpages",
     "deploy": "gh-pages -d dist -b gh-pages"

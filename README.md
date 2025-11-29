@@ -1,160 +1,92 @@
-# FocosX
+# FocosX — Spatial Study Workspace (Web App)
 
-FocosX is a minimal, extensible spatial workspace for deep study and annotation. It provides an infinite canvas and a plugin-based frame architecture for rendering documents, images, and interactive frames. This README explains how to run the project locally, build a production bundle, and deploy to GitHub Pages.
+Live site: https://EV-OD.github.io/focosx/
 
----
+This README is written for two audiences:
+- End users who want to use the web app in a browser.
+- Developers and contributors — see `CONTRIBUTING.md` for development setup and contribution guidelines.
 
-Table of contents
-- Overview
-- Prerequisites
-- Quick start (development)
-- Environment variables
-- Building for production
-- Deploying to GitHub Pages
-- Continuous deployment (GitHub Actions example)
-- Notes, troubleshooting & recommendations
-- License & contribution
+If you are here to run or contribute to the code, open `CONTRIBUTING.md` (in the repo root) for technical and workflow details.
 
 ---
 
-Overview
---------
-FocosX is a client-side React + Vite application. The project prefers pnpm for package management and supports a static build suitable for hosting on GitHub Pages or any static hosting provider.
+## For users — What FocosX is
 
-The app includes an optional advanced PDF viewer plugin that uses the PDFium WebAssembly engine. To keep builds portable, this plugin is configured to load heavy binaries and JS modules from CDNs at runtime. See the "Notes" section for implications.
+FocosX is a browser-first spatial workspace designed for deep study, organizing materials, and lightweight annotation. It uses a plugin-based frame model so you can open documents, place them on an infinite canvas, and rearrange content visually.
 
-Prerequisites
--------------
-- Node.js (v18+ recommended)
-- pnpm (v7+ recommended)
-- Git (for deployment to GitHub Pages)
-- A GitHub repository if you plan to deploy to GitHub Pages
+Core user experiences:
+- Open the app in your browser and arrange frames on the canvas.
+- View documents (PDFs and supported file types) in dedicated frames.
+- Pan and zoom the canvas to organize study materials spatially.
+- Use built-in frame controls (move, resize, close) to manage content.
 
-Quick start (development)
--------------------------
-1. Clone the repository and move into the project folder:
-   `cd focosx` (where `focosx` is the project root)
+The app is provided as a static web app — no installation is required beyond a modern web browser.
 
-2. Install dependencies using pnpm:
-   `pnpm install`
+---
 
-3. Run the development server:
-   `pnpm dev`
+## How to access the web app
 
-4. Open the app in your browser:
-   `http://localhost:3000` (Vite will show the actual URL/port in the terminal)
+- Open the hosted site: https://EV-OD.github.io/focosx/
+  - If the site is not yet published, you can run a local instance (see the developer instructions in `CONTRIBUTING.md`).
 
-Environment variables
----------------------
-The project uses environment variables to manage optional API keys and sensitive values. Create a `.env.local` (or similar) in the `focosx` folder if you need to provide private keys.
+Supported browsers
+- Modern Chromium-based browsers (Chrome, Edge), Firefox, and Safari are supported.
+- Ensure JavaScript is enabled. For the best experience, use an up-to-date browser version.
 
-Common example:
-- `GEMINI_API_KEY` — used by some optional integrations. Export it as:
-  `GEMINI_API_KEY=your_api_key_here`
+---
 
-Vite environment variables follow the `process.env` usage in code (the project uses `loadEnv` to pass selected vars at build time). Do not commit sensitive keys to source control.
+## Basic user guide
 
-Building for production
------------------------
-To create a production build:
+1. Launch the web app in your browser.
+2. Create or add a frame:
+   - Use the UI controls to add a new frame or open a file.
+3. Open a document (PDF or supported format):
+   - You can open local files or provide URLs depending on the frame type.
+4. Arrange and organize:
+   - Drag frames on the canvas, resize them, and position them spatially.
+5. View controls:
+   - Frames that render documents provide navigation (page controls), zoom, and other context-aware actions.
+6. Export / share:
+   - If export or snapshot features are enabled in the UI you can save or share frame contents (availability depends on the build and enabled plugins).
 
-1. Build the app:
-   `pnpm build`
+Note: Some features (for example advanced PDF rendering) use WebAssembly and third-party CDN assets which must be accessible from your browser to function correctly.
 
-   - This runs the standard Vite production build and outputs the static site into `dist/`.
+---
 
-2. (Optional) Build specifically for GitHub Pages base path:
-   - The repository includes a script `build:ghpages` which sets the base path to the repo name (check `package.json` and update `REPO_NAME`).
-   - Example:
-     `pnpm run build:ghpages`
+## Privacy & security notes for users
 
-Important:
-- If you are deploying to a subpath (e.g. `https://USERNAME.github.io/REPO_NAME/`), make sure `build:ghpages` uses the correct `--base /REPO_NAME/` value or set `base` in `vite.config.ts` for your CI/deployment environment.
+- Files you open in the browser are processed client-side. The app is designed to run entirely in the browser; it does not automatically upload your files to a server.
+- If you provide API keys (for optional integrations), keep them secret and do not paste them into public pages.
+- The PDF rendering engine and some optional libraries are loaded from public CDNs at runtime. If you require self-hosting or an air-gapped environment, contact the repository maintainers or consult the developer docs in `CONTRIBUTING.md` for guidance on bundling or hosting those assets locally.
 
-Deploying to GitHub Pages
--------------------------
-The project includes a `deploy` script that uses the `gh-pages` package to push the `dist/` build to a `gh-pages` branch.
+---
 
-1. Configure `package.json`
-   - Set `"homepage": "https://USERNAME.github.io/REPO_NAME"` (replace `USERNAME` and `REPO_NAME`).
-   - Update the `build:ghpages` script `--base /REPO_NAME/` accordingly.
+## Troubleshooting (user-facing)
 
-2. Build and deploy:
-   - You can run:
-     `pnpm run deploy`
-   - `deploy` runs the `predeploy`/`prepublish` script (which builds) and then publishes `dist/` to the `gh-pages` branch.
+- If PDFs or advanced features fail to load:
+  - Check your browser console for CORS or network errors (the browser can show blocked CDN requests).
+  - Ensure your network allows requests to public CDNs (e.g., esm.sh, jsdelivr, unpkg).
+- If the app appears broken or styles are missing:
+  - Try a hard reload (Ctrl+Shift+R / Cmd+Shift+R). If the problem persists, open an issue in the repo with screenshots and console logs.
 
-3. Enable GitHub Pages in the repository settings:
-   - Go to your repo → Settings → Pages.
-   - Ensure the source is set to the `gh-pages` branch, and the correct folder (`/` or `/root`) is selected.
+---
 
-Continuous deployment (GitHub Actions example)
-----------------------------------------------
-A simple GitHub Actions workflow may perform the install/build/deploy steps automatically on push to `main`. A minimal flow should:
+## For developers & contributors (brief)
 
-- Checkout repository
-- Setup Node.js (matching your Node version)
-- Install pnpm
-- Run `pnpm install`
-- Run `pnpm run build:ghpages`
-- Use `peaceiris/actions-gh-pages` or `gh-pages` deploy action to push `dist/` to `gh-pages`
+This README is intentionally focused on the user's view. Development setup and contribution guidelines are in the repository file `CONTRIBUTING.md`.
 
-Example (conceptual; save under `.github/workflows/deploy.yml` — adapt to your org/repo):
-    name: Deploy to GitHub Pages
-    on:
-      push:
-        branches: [ main ]
-    jobs:
-      build-and-deploy:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-          - name: Setup Node
-            uses: actions/setup-node@v4
-            with:
-              node-version: '18'
-          - name: Install pnpm
-            run: corepack enable && corepack prepare pnpm@latest --activate
-          - name: Install dependencies
-            run: pnpm install
-          - name: Build (GH Pages base)
-            run: pnpm run build:ghpages
-          - name: Deploy to gh-pages
-            uses: peaceiris/actions-gh-pages@v4
-            with:
-              github_token: ${{ secrets.GITHUB_TOKEN }}
-              publish_dir: ./dist
+Quick pointers for contributors:
+- `CONTRIBUTING.md` contains:
+  - Local development commands
+  - How to build and test
+  - Branching and PR guidelines
+  - Coding standards and recommended tools
+- The project uses Vite + React + TypeScript. `pnpm` is the recommended package manager.
+- For changes that affect the web app UX, include:
+  - Clear description of behavior
+  - Screenshots or short recordings when practical
+  - Any cross-browser considerations
 
-Notes, troubleshooting & recommendations
----------------------------------------
-- PDFium / @embedpdf modules:
-  - The repo uses runtime/dynamic loading of PDFium JS and wasm from CDN fallbacks to make the static build portable and avoid registry install failures in some environments.
-  - As a result, the PDF viewer requires client-side CDN access to work. If your environment blocks external CDNs, consider:
-    - Adding the `@embedpdf` packages back to `dependencies` and bundling them (may increase bundle size and require the packages be available in the registry).
-    - Hosting the wasm and JS artifacts on your own CDN and updating the plugin to reference your hosted assets.
+---
 
-- Large build chunks:
-  - The build may produce large JS chunks (depending on optional libraries). To reduce initial bundle size:
-    - Use dynamic `import()` for heavy features (code-splitting).
-    - Use `build.rollupOptions.output.manualChunks` in `vite.config.ts` for explicit chunking.
-    - Tree-shake unused libraries and prefer CDN runtime loads when appropriate.
-
-- Missing `index.css` warning:
-  - The project expects `/index.css` at runtime. A minimal `index.css` exists to cover base behavior, but you can replace with your preferred styling approach.
-
-- Vite CLI flags:
-  - Some tools (pnpm wrappers) may attempt to pass flags unsupported by Vite. Use the scripts defined in `package.json` rather than passing unknown CLI flags.
-
-Contributing
-------------
-- Fork the repo and open a pull request for any non-trivial changes.
-- For major changes (architecture, plugin API), please open an issue first and outline the proposed changes.
-- Keep builds green: run `pnpm install` and `pnpm build` locally before submitting PRs.
-
-License
--------
-Include your project's license here (for example, MIT). If you do not want to add an explicit license, be aware that the default is "all rights reserved".
-
-Contact / More information
---------------------------
-For questions about the internal plugin API, or if you want me to scaffold a GitHub Actions workflow or revert the dynamic-CDN changes for PDFium so you can bundle it, tell me the preferred deployment method and repo details and I will prepare the artifacts or PR for you.
+If you need any specific user-facing documentation added (keyboard shortcuts, detailed step-by-step workflows, or a video walkthrough), tell me what you'd like to include and I will prepare it next.
