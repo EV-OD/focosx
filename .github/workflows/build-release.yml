@@ -61,8 +61,11 @@ jobs:
           version: 8
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: actions-rs/toolchain@v1
         with:
+          toolchain: stable
+          profile: minimal
+          override: true
           targets: ${{ matrix.target }}
 
       - name: Install Linux dependencies
