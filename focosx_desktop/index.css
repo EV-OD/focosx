@@ -1,0 +1,116 @@
+/* Minimal global stylesheet for FocosX (desktop)
+   Purpose: ensure /index.css exists at runtime and provide
+   baseline styles (colors, layout, scrollbar hiding) used by the app.
+*/
+
+:root {
+  --bg: #09090b;       /* Zinc 950 */
+  --surface: #18181b;  /* Zinc 900 */
+  --border: #27272a;   /* Zinc 800 */
+  --text: #a1a1aa;     /* Zinc 400 */
+  --muted: #71717a;    /* Zinc 500 */
+  --accent: #e4e4e7;   /* Zinc 200 */
+  --max-content-width: 1400px;
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Basic resets */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* App-level body styles */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden; /* App manages scrolling within panels */
+  line-height: 1.35;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Provide a container helper used by the app layout */
+.app-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* Make images behave nicely inside the app */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Small utility: hide scrollbars visually but keep scrolling enabled */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* A subtle surface card */
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+/* Action / accent button baseline (used where Tailwind isn't present) */
+.btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Accessibility helpers */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Ensure code blocks / monospace text look consistent */
+code, kbd, pre, samp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+  font-size: 0.95em;
+}
+
+/* Small responsive helpers */
+@media (max-width: 640px) {
+  .surface { border-radius: 6px; }
+  .btn { padding: 6px 8px; font-size: 0.875rem; }
+}
