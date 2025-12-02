@@ -238,8 +238,7 @@ jobs:
           find focosx_desktop/src-tauri/target -path "*/bundle/*" -type f 2>/dev/null | head -50 || true
           echo ""
           echo "=== Expected path ==="
-          ls -la "focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/" 2>/dev/null || echo "Target-specific bundle not found"
-          ls -la "focosx_desktop/src-tauri/target/release/bundle/" 2>/dev/null || echo "Default bundle not found"
+          ls -la "focosx_desktop/src-tauri/target/release/bundle/" 2>/dev/null || echo "Bundle not found"
 
       - name: Copy artifacts to staging
         shell: bash
