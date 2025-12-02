@@ -226,6 +226,8 @@ jobs:
         with:
           projectPath: focosx_desktop
           args: --target ${{ matrix.target }}
+          uploadArtifacts: true
+          includeRelease: true
 
       - name: List built artifacts
         if: always()
