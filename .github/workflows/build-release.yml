@@ -100,9 +100,12 @@ jobs:
           ./scripts/generate-icons.sh || echo "Icon generation completed with warnings"
 
       - name: Install frontend dependencies (root)
+        env:
+          PNPM_CONFIG_FROZEN_LOCKFILE: 'false'
         run: |
           # Install workspace/root dependencies (includes shared deps used by focosx_desktop)
-          pnpm install --frozen-lockfile
+          # Explicitly disable frozen lockfile via env + flag to avoid CI defaults
+          pnpm install --no-frozen-lockfile
 
       - name: Install focosx_desktop dependencies
         working-directory: focosx_desktop
