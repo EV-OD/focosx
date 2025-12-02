@@ -218,25 +218,25 @@ jobs:
           }
 
       - name: Build Tauri app
-        # Use the tauri-action to build the app and generate the installers
+        # This step successfully creates the artifacts in the specified path
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          projectPath: focosx_desktop
+          projectPath: focosx_desktop # This sets the context for the build
           args: --target ${{ matrix.target }}
-          includeRelease: true # This makes the tauri-action look for release files
+          includeRelease: true
 
-      # --- NEW STEP TO UPLOAD ARTIFACTS ---
-      - name: Upload Artifacts to Workflow Run
+      # --- CORRECTED STEP TO UPLOAD ARTIFACTS ---
+      - name: Upload Tauri Installers
         uses: actions/upload-artifact@v4
         with:
-          # Use a descriptive name for the artifact
-          name: ${{ matrix.target }}-Tauri-Bundle
-          # The path to the directory containing all the generated installers/bundles
-          path: focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/*
+          name: FocosX-Installer-${{ matrix.target }}
+          # The path is now relative to the project root (focosx_desktop)
+          # using a glob pattern to capture all files in the 'bundle' directory.
+          path: ${{ github.workspace }}/focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*
 
 
       - name: List built artifacts
