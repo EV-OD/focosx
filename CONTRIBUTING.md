@@ -80,6 +80,45 @@ Deploy to GitHub Pages (pushes `dist/` to `gh-pages` branch):
 pnpm run deploy
 ```
 
+### Additional steps for building the Tauri (desktop) app on Ubuntu
+
+The desktop build requires several native system development libraries (JavaScriptCore / WebKit and libsoup). On Ubuntu you must install the development packages so `pkg-config` can find the `.pc` files used by the Rust crates.
+
+Run the following commands on Ubuntu (tested on Ubuntu 22.04 / 24.04 family):
+
+```bash
+# Update first
+sudo apt update
+
+# Install build tools and required dev packages for Tauri + WebKit/JSCore + libsoup
+sudo apt install -y build-essential pkg-config cmake curl \
+  libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev \
+  libsoup3.0-dev libssl-dev libglib2.0-dev libgtk-4-dev \
+  gobject-introspection libgirepository1.0-dev
+```
+
+Notes and troubleshooting:
+- If `pkg-config` still cannot find `javascriptcoregtk-4.1.pc` or `libsoup-3.0.pc`, verify the files exist under `/usr/lib/pkgconfig` or `/usr/lib/x86_64-linux-gnu/pkgconfig`. For example:
+  ```bash
+  ls /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc
+  ls /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc
+  ```
+- If the `.pc` files are in a non-standard location (for example custom prefix), set `PKG_CONFIG_PATH` before building:
+  ```bash
+  export PKG_CONFIG_PATH="/custom/path/lib/pkgconfig:$PKG_CONFIG_PATH"
+  # Then run the desktop build (see below)
+  ```
+- After installing system packages, build the desktop app from the `focosx_desktop` directory:
+  ```bash
+  cd focosx/focosx_desktop
+  pnpm install
+  # then build or run the Tauri command (this may invoke cargo)
+  pnpm run tauri   # or use the specific script in package.json like `pnpm run build` for packaging
+  ```
+- If you still see errors referencing `javascriptcoregtk-4.1` or `libsoup-3.0`, paste the exact error output into an issue so maintainers can help—you may be on an Ubuntu version where package names differ or additional compatibility packages are required.
+
+This section is intentionally focused on Ubuntu. If you want, we can add distro-specific instructions for Fedora, Arch, or macOS as well.
+
 ---
 
 ## Available scripts

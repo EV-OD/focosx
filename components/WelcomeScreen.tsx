@@ -16,8 +16,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenVault, onOpe
   // Form State
   const [newVaultName, setNewVaultName] = useState('');
   const [newVaultPath, setNewVaultPath] = useState('Local Storage/');
+  const [isTauri, setIsTauri] = useState(false);
 
   useEffect(() => {
+    // Desktop-only app: always enable Tauri features immediately.
+    setIsTauri(true);
     loadVaults();
   }, []);
 
@@ -35,7 +38,15 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenVault, onOpe
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVaultName.trim()) return;
-    
+    // If running under desktop and a filesystem path was selected, persist it
+    if (isTauri && newVaultPath && newVaultPath !== 'Local Storage/') {
+      try {
+        await storage.setVaultRootPath(newVaultPath);
+      } catch (e) {
+        console.warn('failed to set vault root path', e);
+      }
+    }
+
     // Create with path
     const vault = await storage.createVault(newVaultName, newVaultPath);
     
@@ -131,7 +142,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenVault, onOpe
         </div>
         
         <p className="mt-8 text-center text-xs text-zinc-700">
-            Files are stored locally in your browser.
+          {isTauri
+            ? 'Files will be persisted to the selected filesystem paths on your computer.'
+            : 'Files are stored locally in your browser.'}
         </p>
       </div>
 
@@ -177,25 +190,43 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenVault, onOpe
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                              <Folder className="w-4 h-4 text-zinc-600" />
                         </div>
-                        <input 
-                            type="text" 
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-400 focus:outline-none focus:border-zinc-700 transition-all cursor-not-allowed"
-                            value={newVaultPath}
-                            onChange={(e) => setNewVaultPath(e.target.value)}
-                            readOnly // Read-only for browser storage version
+                        <input
+                          type="text"
+                          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-400 focus:outline-none focus:border-zinc-700 transition-all"
+                          value={newVaultPath}
+                          onChange={(e) => setNewVaultPath(e.target.value)}
                         />
                     </div>
-                    <button 
-                        type="button"
-                        className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-colors"
-                        title="Browse..."
-                        onClick={() => alert("In the web version, files are securely stored in your browser's local storage.")}
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-colors"
+                      title="Browse..."
+                      onClick={async () => {
+                        if (!isTauri) {
+                          alert("In the web version, files are securely stored in your browser's local storage.");
+                          return;
+                        }
+                        try {
+                          const mod = await import(/* @vite-ignore */ '@tauri-apps/plugin-dialog');
+                          const selected = await mod.open({ directory: true, multiple: false });
+                          if (Array.isArray(selected)) {
+                            if (selected.length > 0) setNewVaultPath(String(selected[0]));
+                          } else if (selected) {
+                            setNewVaultPath(String(selected));
+                          }
+                        } catch (e) {
+                          console.error('folder pick failed', e);
+                          alert('Unable to open folder picker.');
+                        }
+                      }}
                     >
-                        Browse
+                      Browse
                     </button>
                 </div>
                 <p className="text-[10px] text-zinc-600">
-                    Path management is simulated in this web demo. 
+                  {isTauri
+                    ? 'Selected path will be used to persist this vault on your filesystem.'
+                    : 'Path management is simulated in this web demo.'}
                 </p>
             </div>
          </form>
