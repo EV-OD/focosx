@@ -7,7 +7,15 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "icons": "bash scripts/generate-icons.sh",
+    "build:desktop": "bash scripts/build.sh current",
+    "build:linux": "bash scripts/build.sh linux",
+    "build:windows": "bash scripts/build.sh windows",
+    "build:macos": "bash scripts/build.sh macos",
+    "build:all": "bash scripts/build.sh all",
+    "build:debug": "bash scripts/build.sh --debug current",
+    "release": "bash scripts/build.sh current"
   },
   "dependencies": {
     "react": "^19.1.0",

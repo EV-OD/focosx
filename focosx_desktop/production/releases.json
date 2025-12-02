@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0",
+  "date": "2025-12-02T15:39:55Z",
+  "downloads": {
+    "FocosX-0.1.0-1.x86_64.rpm": {
+      "platform": "linux",
+      "type": "rpm",
+      "size": 6016550,
+      "url": "/downloads/FocosX-0.1.0-1.x86_64.rpm"
+    },
+    "FocosX_0.1.0_amd64.deb": {
+      "platform": "linux",
+      "type": "deb",
+      "size": 6013328,
+      "url": "/downloads/FocosX_0.1.0_amd64.deb"
+    }
+  }
+}

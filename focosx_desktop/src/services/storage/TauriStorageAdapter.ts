@@ -8,7 +8,7 @@ export class TauriStorageAdapter implements IStorageAdapter {
     }
 
     const mod = await import(/* @vite-ignore */ "@tauri-apps/api/core");
-    return (mod.invoke ?? (mod.default && mod.default.invoke)) as (
+    return mod.invoke as (
       cmd: string,
       payload?: any,
     ) => Promise<any>;

@@ -23,7 +23,7 @@ export class FileAdapterV2 implements IStorageAdapter {
 
   private async getInvoke(): Promise<(cmd: string, payload?: any) => Promise<any>> {
     const mod = await import(/* @vite-ignore */ "@tauri-apps/api/core");
-    const invoke = (mod.invoke ?? (mod.default && mod.default.invoke)) as (
+    const invoke = mod.invoke as (
       cmd: string,
       payload?: any,
     ) => Promise<any>;

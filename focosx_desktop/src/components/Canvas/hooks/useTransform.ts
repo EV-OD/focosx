@@ -2,7 +2,7 @@
 import React, { useState, useCallback, RefObject } from 'react';
 import { InteractionMode } from '../../../types';
 
-export const useTransform = (containerRef: RefObject<HTMLDivElement>) => {
+export const useTransform = (containerRef: RefObject<HTMLDivElement | null>) => {
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
 
   const screenToWorld = useCallback((screenX: number, screenY: number) => {

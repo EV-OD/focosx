@@ -12,7 +12,7 @@ class ProxyStorage implements IStorageAdapter {
     (async () => {
       try {
         const mod = await import(/* @vite-ignore */ "@tauri-apps/api/core");
-        const invoke = (mod.invoke ?? (mod.default && mod.default.invoke)) as any;
+        const invoke = mod.invoke as any;
         if (typeof invoke === 'function' && typeof (window as any).__TAURI__ !== 'undefined') {
           try {
             const res = await invoke('ping');
@@ -76,7 +76,7 @@ class ProxyStorage implements IStorageAdapter {
 
       try {
         const mod = await import(/* @vite-ignore */ "@tauri-apps/api/core");
-        const invoke = (mod.invoke ?? (mod.default && mod.default.invoke)) as (
+        const invoke = mod.invoke as (
           cmd: string,
           payload?: any,
         ) => Promise<any>;

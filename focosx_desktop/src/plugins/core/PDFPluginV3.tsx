@@ -165,7 +165,7 @@ const PDFiumViewer: React.FC<{
   interactive = true,
   className,
 }) => {
-  const [engine, setEngine] = useState<PdfiumEngine | null>(null);
+  const [engine, setEngine] = useState<typeof PdfiumEngine | null>(null);
   const [doc, setDoc] = useState<any>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [numPages, setNumPages] = useState(0);
