@@ -66,7 +66,7 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          targets: ${{ matrix.target }}
+          target: ${{ matrix.target }}
 
       - name: Install Linux dependencies
         if: matrix.os_name == 'linux'
@@ -231,14 +231,19 @@ jobs:
         if: always()
         shell: bash
         run: |
-          echo "=== Listing all built artifacts ==="
-          find focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle -type f 2>/dev/null || echo "No bundle directory found"
+          echo "=== Searching for bundle directories ==="
+          find focosx_desktop/src-tauri/target -name "bundle" -type d 2>/dev/null
+          echo ""
+          echo "=== All bundle contents ==="
+          find focosx_desktop/src-tauri/target -path "*/bundle/*" -type f 2>/dev/null | head -50
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: focosx-${{ matrix.os_name }}-${{ matrix.arch }}
-          path: focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/
+          path: |
+            focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/
+            focosx_desktop/src-tauri/target/release/bundle/
           if-no-files-found: warn
 
   release:
