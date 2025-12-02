@@ -232,18 +232,37 @@ jobs:
         shell: bash
         run: |
           echo "=== Searching for bundle directories ==="
-          find focosx_desktop/src-tauri/target -name "bundle" -type d 2>/dev/null
+          find focosx_desktop/src-tauri/target -name "bundle" -type d 2>/dev/null || true
           echo ""
           echo "=== All bundle contents ==="
-          find focosx_desktop/src-tauri/target -path "*/bundle/*" -type f 2>/dev/null | head -50
+          find focosx_desktop/src-tauri/target -path "*/bundle/*" -type f 2>/dev/null | head -50 || true
+          echo ""
+          echo "=== Expected path ==="
+          ls -la "focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/" 2>/dev/null || echo "Target-specific bundle not found"
+          ls -la "focosx_desktop/src-tauri/target/release/bundle/" 2>/dev/null || echo "Default bundle not found"
+
+      - name: Copy artifacts to staging
+        shell: bash
+        run: |
+          mkdir -p staging
+          # Copy from target-specific path
+          if [ -d "focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle" ]; then
+            echo "Copying from target-specific bundle..."
+            cp -r focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/* staging/ || true
+          fi
+          # Copy from default path (fallback)
+          if [ -d "focosx_desktop/src-tauri/target/release/bundle" ]; then
+            echo "Copying from default bundle..."
+            cp -r focosx_desktop/src-tauri/target/release/bundle/* staging/ || true
+          fi
+          echo "=== Staging contents ==="
+          find staging -type f 2>/dev/null || echo "No files in staging"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: focosx-${{ matrix.os_name }}-${{ matrix.arch }}
-          path: |
-            focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/
-            focosx_desktop/src-tauri/target/release/bundle/
+          path: staging/
           if-no-files-found: warn
 
   release:
