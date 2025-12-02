@@ -117,6 +117,26 @@ jobs:
         working-directory: focosx_desktop
         run: pnpm build
 
+      - name: Ensure Rust target is installed
+        # Ensure the requested cargo target is present on the runner before tauri build
+        run: |
+          echo "Installing Rust target: ${{ matrix.target }}"
+          rustup target add ${{ matrix.target }} || true
+
+      - name: Ensure icons are valid PNG (RGBA)
+        # Convert PNG icons to have an alpha channel (fixes "icon ... is not RGBA" panics)
+        run: |
+          if command -v convert >/dev/null 2>&1; then
+            echo "Converting icons to RGBA where needed"
+            for f in src-tauri/icons/*.png; do
+              if [ -f "$f" ]; then
+                convert "$f" -background none -alpha set "$f" || true
+              fi
+            done
+          else
+            echo "ImageMagick not found; skipping icon conversion"
+          fi
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
