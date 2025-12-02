@@ -99,76 +99,7 @@ jobs:
           chmod +x scripts/generate-icons.sh
           ./scripts/generate-icons.sh || echo "Icon generation completed with warnings"
 
-      - name: Diagnose and enforce PNG RGBA (Linux)
-        if: matrix.os_name == 'linux'
-        run: |
-          ICON_DIR="focosx_desktop/src-tauri/icons"
-          echo "Checking icon directory: $ICON_DIR"
-          if [ ! -d "$ICON_DIR" ]; then
-            echo "Icon directory not found: $ICON_DIR"
-            exit 0
-          fi
-          echo "Contents:" && ls -la "$ICON_DIR"
-          if command -v identify >/dev/null 2>&1; then
-            echo "Channel info (identify):"
-            for f in "$ICON_DIR"/*.png; do
-              [ -f "$f" ] || continue
-              identify -format "%f %[channels]\n" "$f" || true
-            done
-          else
-            echo "identify not available"
-          fi
-          if command -v convert >/dev/null 2>&1; then
-            echo "Forcing conversion to TrueColorAlpha (RGBA) using convert"
-            for f in "$ICON_DIR"/*.png; do
-              [ -f "$f" ] || continue
-              convert "$f" -background none -alpha set -colorspace sRGB -type TrueColorAlpha "$f" || true
-            done
-            echo "Post-conversion channel info:"
-            for f in "$ICON_DIR"/*.png; do
-              [ -f "$f" ] || continue
-              identify -format "%f %[channels]\n" "$f" || true
-            done
-          else
-            echo "ImageMagick convert not found; cannot enforce RGBA"
-          fi
-
-      - name: Force-regenerate icons from SVG (Linux)
-        if: matrix.os_name == 'linux'
-        run: |
-          ICON_DIR="focosx_desktop/src-tauri/icons"
-          SVG="$ICON_DIR/icon.svg"
-          echo "Tool versions and availability:"
-          convert --version 2>/dev/null || echo "convert missing"
-          rsvg-convert --version 2>/dev/null || echo "rsvg-convert missing"
-          identify -version 2>/dev/null || echo "identify missing"
-
-          # Re-run the project's icon generator to ensure files exist
-          if [ -f "focosx_desktop/scripts/generate-icons.sh" ]; then
-            chmod +x focosx_desktop/scripts/generate-icons.sh
-            (cd focosx_desktop && ./scripts/generate-icons.sh) || echo "generate-icons.sh finished with warnings"
-          fi
-
-          if [ -f "$SVG" ]; then
-            echo "Regenerating PNGs from $SVG"
-            for size in 32 64 128 256 512; do
-              out="$ICON_DIR/${size}x${size}.png"
-              if command -v rsvg-convert >/dev/null 2>&1; then
-                rsvg-convert -w $size -h $size "$SVG" -o "$out" || true
-              elif command -v convert >/dev/null 2>&1; then
-                convert "$SVG" -resize ${size}x${size} -background none -alpha set "$out" || true
-              else
-                echo "No SVG -> PNG conversion tool found; skipping $out"
-              fi
-            done
-            echo "Post-regeneration channels:"
-            for f in "$ICON_DIR"/*.png; do
-              [ -f "$f" ] || continue
-              identify -format "%f %[channels]\n" "$f" || true
-            done
-          else
-            echo "$SVG not found; cannot regenerate from SVG"
-          fi
+      # Removed intermediate icon steps - all icon work now happens in "Force RGBA icons" step before Tauri build
 
       - name: Install frontend dependencies (root)
         env:
@@ -194,44 +125,96 @@ jobs:
           echo "Installing Rust target: ${{ matrix.target }}"
           rustup target add ${{ matrix.target }} || true
 
-      - name: Ensure icons are valid PNG (RGBA) — Unix
-        if: matrix.os_name != 'windows'
-        # Convert PNG icons to have an alpha channel (fixes "icon ... is not RGBA" panics)
+      - name: Force RGBA icons (Linux)
+        if: matrix.os_name == 'linux'
         run: |
+          set -e
           ICON_DIR="focosx_desktop/src-tauri/icons"
-          if [ ! -d "$ICON_DIR" ]; then
-            echo "Icon directory '$ICON_DIR' not found; skipping conversion"
-            exit 0
+          echo "=== Force RGBA icons ==="
+          echo "Icon directory: $ICON_DIR"
+          ls -la "$ICON_DIR" || true
+          
+          # Print tool versions
+          echo "ImageMagick version:"
+          convert --version | head -1 || echo "convert not found"
+          
+          # Force convert ALL PNGs to RGBA using png:color-type=6
+          echo "Converting all PNGs to RGBA (png:color-type=6)..."
+          for f in "$ICON_DIR"/*.png; do
+            [ -f "$f" ] || continue
+            echo "Processing: $f"
+            # Create temp file, convert with forced RGBA, replace original
+            convert "$f" -background none -alpha on -define png:color-type=6 "${f}.tmp.png"
+            mv "${f}.tmp.png" "$f"
+          done
+          
+          # Verify all PNGs are now RGBA
+          echo "=== Verification ==="
+          ALL_RGBA=true
+          for f in "$ICON_DIR"/*.png; do
+            [ -f "$f" ] || continue
+            channels=$(identify -format "%[channels]" "$f" 2>/dev/null || echo "unknown")
+            colortype=$(identify -format "%[png:color-type]" "$f" 2>/dev/null || echo "unknown")
+            echo "$f: channels=$channels color-type=$colortype"
+            if [ "$channels" != "srgba" ] && [ "$channels" != "rgba" ]; then
+              echo "WARNING: $f is NOT RGBA (channels=$channels)"
+              ALL_RGBA=false
+            fi
+          done
+          
+          if [ "$ALL_RGBA" = "false" ]; then
+            echo "ERROR: Some icons are still not RGBA after conversion!"
+            exit 1
           fi
-          if command -v convert >/dev/null 2>&1; then
-            echo "Converting icons to RGBA where needed in $ICON_DIR"
-            for f in "$ICON_DIR"/*.png; do
-              if [ -f "$f" ]; then
-                convert "$f" -background none -alpha set "$f" || true
-              fi
-            done
-          else
-            echo "ImageMagick not found; skipping icon conversion"
-          fi
+          echo "All icons are RGBA. Ready for Tauri build."
 
-      - name: Ensure icons are valid PNG (RGBA) — Windows
+      - name: Force RGBA icons (macOS)
+        if: matrix.os_name == 'macos'
+        run: |
+          set -e
+          ICON_DIR="focosx_desktop/src-tauri/icons"
+          echo "=== Force RGBA icons (macOS) ==="
+          ls -la "$ICON_DIR" || true
+          
+          # Use magick (ImageMagick 7) on macOS
+          echo "ImageMagick version:"
+          magick --version | head -1 || convert --version | head -1 || echo "ImageMagick not found"
+          
+          for f in "$ICON_DIR"/*.png; do
+            [ -f "$f" ] || continue
+            echo "Processing: $f"
+            if command -v magick >/dev/null 2>&1; then
+              magick "$f" -background none -alpha on -define png:color-type=6 "${f}.tmp.png"
+            else
+              convert "$f" -background none -alpha on -define png:color-type=6 "${f}.tmp.png"
+            fi
+            mv "${f}.tmp.png" "$f"
+          done
+          echo "All icons processed."
+
+      - name: Force RGBA icons (Windows)
         if: matrix.os_name == 'windows'
         shell: powershell
         run: |
-          # Use ImageMagick 'magick' binary on Windows if available
           $iconDir = "focosx_desktop\src-tauri\icons"
+          Write-Host "=== Force RGBA icons (Windows) ==="
           if (-not (Test-Path $iconDir)) {
             Write-Host "Icon directory '$iconDir' not found; skipping conversion"
             exit 0
           }
+          Get-ChildItem -Path $iconDir | Format-Table Name, Length
+          
           $magick = Get-Command magick -ErrorAction SilentlyContinue
           if ($null -ne $magick) {
-            Write-Host "Converting icons to RGBA using magick in $iconDir"
+            Write-Host "Using magick to force RGBA (png:color-type=6)"
             Get-ChildItem -Path $iconDir -Filter *.png -File | ForEach-Object {
-              & magick $_.FullName -background none -alpha set $_.FullName
+              $tmp = "$($_.FullName).tmp.png"
+              & magick $_.FullName -background none -alpha on -define png:color-type=6 $tmp
+              Move-Item -Force $tmp $_.FullName
+              Write-Host "Processed: $($_.Name)"
             }
           } else {
-            Write-Host "ImageMagick 'magick' not found; skipping icon conversion"
+            Write-Host "WARNING: ImageMagick 'magick' not found; icons may not be RGBA"
           }
 
       - name: Build Tauri app
