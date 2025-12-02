@@ -133,6 +133,43 @@ jobs:
             echo "ImageMagick convert not found; cannot enforce RGBA"
           fi
 
+      - name: Force-regenerate icons from SVG (Linux)
+        if: matrix.os_name == 'linux'
+        run: |
+          ICON_DIR="focosx_desktop/src-tauri/icons"
+          SVG="$ICON_DIR/icon.svg"
+          echo "Tool versions and availability:"
+          convert --version 2>/dev/null || echo "convert missing"
+          rsvg-convert --version 2>/dev/null || echo "rsvg-convert missing"
+          identify -version 2>/dev/null || echo "identify missing"
+
+          # Re-run the project's icon generator to ensure files exist
+          if [ -f "focosx_desktop/scripts/generate-icons.sh" ]; then
+            chmod +x focosx_desktop/scripts/generate-icons.sh
+            (cd focosx_desktop && ./scripts/generate-icons.sh) || echo "generate-icons.sh finished with warnings"
+          fi
+
+          if [ -f "$SVG" ]; then
+            echo "Regenerating PNGs from $SVG"
+            for size in 32 64 128 256 512; do
+              out="$ICON_DIR/${size}x${size}.png"
+              if command -v rsvg-convert >/dev/null 2>&1; then
+                rsvg-convert -w $size -h $size "$SVG" -o "$out" || true
+              elif command -v convert >/dev/null 2>&1; then
+                convert "$SVG" -resize ${size}x${size} -background none -alpha set "$out" || true
+              else
+                echo "No SVG -> PNG conversion tool found; skipping $out"
+              fi
+            done
+            echo "Post-regeneration channels:"
+            for f in "$ICON_DIR"/*.png; do
+              [ -f "$f" ] || continue
+              identify -format "%f %[channels]\n" "$f" || true
+            done
+          else
+            echo "$SVG not found; cannot regenerate from SVG"
+          fi
+
       - name: Install frontend dependencies (root)
         env:
           PNPM_CONFIG_FROZEN_LOCKFILE: 'false'
