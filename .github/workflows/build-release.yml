@@ -123,7 +123,8 @@ jobs:
           echo "Installing Rust target: ${{ matrix.target }}"
           rustup target add ${{ matrix.target }} || true
 
-      - name: Ensure icons are valid PNG (RGBA)
+      - name: Ensure icons are valid PNG (RGBA) — Unix
+        if: matrix.os_name != 'windows'
         # Convert PNG icons to have an alpha channel (fixes "icon ... is not RGBA" panics)
         run: |
           if command -v convert >/dev/null 2>&1; then
@@ -136,6 +137,21 @@ jobs:
           else
             echo "ImageMagick not found; skipping icon conversion"
           fi
+
+      - name: Ensure icons are valid PNG (RGBA) — Windows
+        if: matrix.os_name == 'windows'
+        shell: powershell
+        run: |
+          # Use ImageMagick 'magick' binary on Windows if available
+          $magick = Get-Command magick -ErrorAction SilentlyContinue
+          if ($null -ne $magick) {
+            Write-Host "Converting icons to RGBA using magick"
+            Get-ChildItem -Path src-tauri\icons -Filter *.png -File | ForEach-Object {
+              & magick $_.FullName -background none -alpha set $_.FullName
+            }
+          } else {
+            Write-Host "ImageMagick 'magick' not found; skipping icon conversion"
+          }
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
