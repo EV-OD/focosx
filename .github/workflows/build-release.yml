@@ -127,9 +127,14 @@ jobs:
         if: matrix.os_name != 'windows'
         # Convert PNG icons to have an alpha channel (fixes "icon ... is not RGBA" panics)
         run: |
+          ICON_DIR="focosx_desktop/src-tauri/icons"
+          if [ ! -d "$ICON_DIR" ]; then
+            echo "Icon directory '$ICON_DIR' not found; skipping conversion"
+            exit 0
+          fi
           if command -v convert >/dev/null 2>&1; then
-            echo "Converting icons to RGBA where needed"
-            for f in src-tauri/icons/*.png; do
+            echo "Converting icons to RGBA where needed in $ICON_DIR"
+            for f in "$ICON_DIR"/*.png; do
               if [ -f "$f" ]; then
                 convert "$f" -background none -alpha set "$f" || true
               fi
@@ -143,10 +148,15 @@ jobs:
         shell: powershell
         run: |
           # Use ImageMagick 'magick' binary on Windows if available
+          $iconDir = "focosx_desktop\src-tauri\icons"
+          if (-not (Test-Path $iconDir)) {
+            Write-Host "Icon directory '$iconDir' not found; skipping conversion"
+            exit 0
+          }
           $magick = Get-Command magick -ErrorAction SilentlyContinue
           if ($null -ne $magick) {
-            Write-Host "Converting icons to RGBA using magick"
-            Get-ChildItem -Path src-tauri\icons -Filter *.png -File | ForEach-Object {
+            Write-Host "Converting icons to RGBA using magick in $iconDir"
+            Get-ChildItem -Path $iconDir -Filter *.png -File | ForEach-Object {
               & magick $_.FullName -background none -alpha set $_.FullName
             }
           } else {
