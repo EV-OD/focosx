@@ -218,6 +218,7 @@ jobs:
           }
 
       - name: Build Tauri app
+        # Use the tauri-action to build the app and generate the installers
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -226,8 +227,17 @@ jobs:
         with:
           projectPath: focosx_desktop
           args: --target ${{ matrix.target }}
-          uploadArtifacts: true
-          includeRelease: true
+          includeRelease: true # This makes the tauri-action look for release files
+
+      # --- NEW STEP TO UPLOAD ARTIFACTS ---
+      - name: Upload Artifacts to Workflow Run
+        uses: actions/upload-artifact@v4
+        with:
+          # Use a descriptive name for the artifact
+          name: ${{ matrix.target }}-Tauri-Bundle
+          # The path to the directory containing all the generated installers/bundles
+          path: focosx_desktop/src-tauri/target/${{ matrix.target }}/release/bundle/*
+
 
       - name: List built artifacts
         if: always()
