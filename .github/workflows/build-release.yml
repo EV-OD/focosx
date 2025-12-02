@@ -99,6 +99,40 @@ jobs:
           chmod +x scripts/generate-icons.sh
           ./scripts/generate-icons.sh || echo "Icon generation completed with warnings"
 
+      - name: Diagnose and enforce PNG RGBA (Linux)
+        if: matrix.os_name == 'linux'
+        run: |
+          ICON_DIR="focosx_desktop/src-tauri/icons"
+          echo "Checking icon directory: $ICON_DIR"
+          if [ ! -d "$ICON_DIR" ]; then
+            echo "Icon directory not found: $ICON_DIR"
+            exit 0
+          fi
+          echo "Contents:" && ls -la "$ICON_DIR"
+          if command -v identify >/dev/null 2>&1; then
+            echo "Channel info (identify):"
+            for f in "$ICON_DIR"/*.png; do
+              [ -f "$f" ] || continue
+              identify -format "%f %[channels]\n" "$f" || true
+            done
+          else
+            echo "identify not available"
+          fi
+          if command -v convert >/dev/null 2>&1; then
+            echo "Forcing conversion to TrueColorAlpha (RGBA) using convert"
+            for f in "$ICON_DIR"/*.png; do
+              [ -f "$f" ] || continue
+              convert "$f" -background none -alpha set -colorspace sRGB -type TrueColorAlpha "$f" || true
+            done
+            echo "Post-conversion channel info:"
+            for f in "$ICON_DIR"/*.png; do
+              [ -f "$f" ] || continue
+              identify -format "%f %[channels]\n" "$f" || true
+            done
+          else
+            echo "ImageMagick convert not found; cannot enforce RGBA"
+          fi
+
       - name: Install frontend dependencies (root)
         env:
           PNPM_CONFIG_FROZEN_LOCKFILE: 'false'
@@ -203,6 +237,18 @@ jobs:
 
       - name: Display structure of downloaded files
         run: ls -R artifacts
+
+      - name: Verify downloaded artifacts
+        run: |
+          echo "Checking for downloaded artifacts in 'artifacts'..."
+          set -o pipefail
+          count=$(find artifacts -type f | wc -l || true)
+          echo "Found $count files under artifacts/"
+          if [ "$count" -eq 0 ]; then
+            echo "No artifacts were downloaded. Aborting release to avoid attaching only source archives."
+            echo "Check the build job logs to ensure artifacts were uploaded (upload-artifact step)."
+            exit 1
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
