@@ -219,7 +219,7 @@ jobs:
 
       - name: Build Tauri app
         # This step successfully creates the artifacts in the specified path
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
